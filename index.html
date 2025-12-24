@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Early Retirement Calculator | FIRE Safe Withdrawal Rate Projections</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .inputs-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-compact {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-compact label {
+            font-size: 0.7rem;
+            color: #8892b0;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .input-compact input[type="number"] {
+            padding: 8px 10px;
+            font-size: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            width: 100%;
+        }
+        
+        .input-compact input[type="number"]:focus {
+            outline: none;
+            border-color: #feca57;
+        }
+        
+        .slider-compact {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .slider-compact label {
+            font-size: 0.7rem;
+            color: #8892b0;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .slider-compact .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .slider-compact input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .slider-compact input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .slider-compact input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        
+        .slider-compact input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider-compact input[type="range"]::-moz-range-track {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .slider-value {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #feca57;
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .results-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        @media (max-width: 700px) {
+            .results-header {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .result-box {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .result-box.primary {
+            border: 2px solid rgba(254, 202, 87, 0.4);
+        }
+        
+        .result-box.secondary {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .result-box.warning {
+            border: 1px solid rgba(72, 219, 251, 0.3);
+        }
+        
+        .result-box.danger {
+            border: 1px solid rgba(255, 107, 107, 0.4);
+        }
+        
+        .result-label {
+            font-size: 0.65rem;
+            color: #8892b0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .result-value {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #feca57;
+        }
+        
+        .result-value.small {
+            font-size: 1.1rem;
+            color: #a8b2d1;
+        }
+        
+        .result-value.danger {
+            color: #ff6b6b;
+        }
+        
+        .result-value.safe {
+            color: #48dbfb;
+        }
+        
+        .result-sub {
+            font-size: 0.75rem;
+            color: #8892b0;
+            margin-top: 2px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            color: #8892b0;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .nominal {
+            color: #feca57;
+        }
+        
+        .real {
+            color: #48dbfb;
+        }
+        
+        .depleted {
+            color: #ff6b6b;
+            font-style: italic;
+        }
+        
+        .explainer {
+            background: rgba(72, 219, 251, 0.1);
+            border-left: 3px solid #48dbfb;
+            padding: 14px;
+            margin-top: 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: #a8b2d1;
+            line-height: 1.6;
+        }
+        
+        .explainer strong {
+            color: #feca57;
+        }
+        
+        .explainer .real-highlight {
+            color: #48dbfb;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #8892b0;
+            font-size: 0.8rem;
+        }
+        
+        .footer a {
+            color: #feca57;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Early Retirement Calculator</h1>
+        <p style="color: #8892b0; margin-bottom: 20px; font-size: 0.95rem;">FIRE calculator with 50-year projections, safe withdrawal rate modeling, and inflation-adjusted income.</p>
+        
+        <div class="inputs-row">
+            <div class="input-compact">
+                <label>Portfolio ($)</label>
+                <input type="number" id="assets" value="500000" min="0" step="10000">
+            </div>
+            <div class="input-compact">
+                <label>Other Income ($/mo)</label>
+                <input type="number" id="extraIncome" value="0" min="0" step="100">
+                <span style="font-size: 0.6rem; color: #666; margin-top: 2px;">grows with inflation</span>
+            </div>
+            <div class="slider-compact">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="margin-bottom: 0;">Withdrawal Rate</label>
+                    <span class="slider-value" id="swrDisplay">3.0%</span>
+                </div>
+                <input type="range" id="swr" min="2.0" max="4.0" step="0.1" value="3.0">
+            </div>
+            <div class="slider-compact">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="margin-bottom: 0;">Market Growth</label>
+                    <span class="slider-value" id="growthDisplay">5%</span>
+                </div>
+                <input type="range" id="growth" min="0" max="10" step="0.5" value="5">
+            </div>
+            <div class="slider-compact">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label style="margin-bottom: 0;">Inflation</label>
+                    <span class="slider-value" id="inflationDisplay">3%</span>
+                </div>
+                <input type="range" id="inflation" min="0" max="8" step="0.5" value="3">
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="results-header">
+                <div class="result-box primary">
+                    <div class="result-label">Total Annual Income</div>
+                    <div class="result-value" id="totalIncome">$15,000</div>
+                    <div class="result-sub" id="totalMonthly">$1,250/month</div>
+                </div>
+                <div class="result-box secondary">
+                    <div class="result-label">From Portfolio</div>
+                    <div class="result-value small" id="fromPortfolio">$15,000</div>
+                    <div class="result-sub" id="fromPortfolioMonthly">$1,250/mo</div>
+                </div>
+                <div class="result-box secondary">
+                    <div class="result-label">From Other</div>
+                    <div class="result-value small" id="fromOther">$0</div>
+                    <div class="result-sub" id="fromOtherMonthly">$0/mo</div>
+                </div>
+                <div class="result-box warning" id="warningBox">
+                    <div class="result-label">Portfolio Lasts</div>
+                    <div class="result-value safe" id="runsOutYear">50+ yrs</div>
+                    <div class="result-sub" id="runsOutNote"></div>
+                </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Portfolio</th>
+                            <th>From Portfolio</th>
+                            <th>From Other</th>
+                            <th>Total Income <span class="nominal">(Nominal)</span></th>
+                            <th>Buying Power <span class="real">(Real)</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectionTable">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="explainer">
+                <strong>Nominal</strong> = actual dollars you receive. <span class="real-highlight"><strong>Real</strong></span> = what those dollars buy in today's terms. Example: $20k in year 20 at 3% inflation only buys what $11k buys today.
+            </div>
+        </div>
+        
+        <div class="card" style="margin-top: 24px;">
+            <h2 style="color: #ccd6f6; margin-bottom: 16px; font-size: 1.1rem;">How This Calculator Works</h2>
+            
+            <div style="color: #a8b2d1; font-size: 0.9rem; line-height: 1.7;">
+                <h3 style="color: #feca57; font-size: 0.95rem; margin: 20px 0 10px 0;">What is FIRE?</h3>
+                <p style="margin-bottom: 12px;">
+                    FIRE stands for Financial Independence, Retire Early. The concept involves accumulating enough invested assets that portfolio withdrawals can fund living expenses without employment income. This calculator models how a portfolio might perform over a 50-year period under various assumptions.
+                </p>
+                
+                <h3 style="color: #feca57; font-size: 0.95rem; margin: 20px 0 10px 0;">The Inputs</h3>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Portfolio ($)</strong><br>
+                Total invested assets - stocks, bonds, index funds, retirement accounts. This represents funds that will be subject to market growth and withdrawals. Generally excludes home equity (unless planning to sell), emergency cash reserves, and illiquid assets.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Other Income ($/mo)</strong><br>
+                Additional expected income during retirement - part-time work, rental income, side business, pension, etc. This reduces reliance on portfolio withdrawals. The calculator assumes this income grows with inflation each year to maintain purchasing power.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Withdrawal Rate (SWR)</strong><br>
+                The percentage of portfolio value withdrawn in year one. This is a critical variable. The commonly cited "4% rule" originated from research on 30-year retirement periods. For early retirement spanning 40-50+ years, many in the FIRE community use 3% or lower to account for the longer time horizon and sequence of returns risk. This calculator defaults to 3%.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Market Growth</strong><br>
+                Expected annual nominal return on investments. Historical stock market returns have varied significantly by time period and market conditions. Consider using conservative estimates (5% or lower) to stress-test projections. This is a nominal figure (before inflation adjustment).</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Inflation</strong><br>
+                Expected annual increase in prices. Historical US inflation has averaged roughly 3%, though it varies considerably by period. Higher inflation assumptions provide more conservative projections. This affects both withdrawal increases and purchasing power calculations.</p>
+                
+                <h3 style="color: #feca57; font-size: 0.95rem; margin: 20px 0 10px 0;">The Results</h3>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Total Annual Income</strong><br>
+                Combined retirement income in year one: portfolio withdrawal plus other income.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">From Portfolio / From Other</strong><br>
+                Breakdown of income sources. Greater reliance on other income reduces portfolio withdrawal requirements.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Portfolio Lasts</strong><br>
+                Projected years until portfolio depletion based on stated assumptions. "50+ yrs" indicates the portfolio survives the full projection period under these specific assumptions. Actual results may vary significantly.</p>
+                
+                <h3 style="color: #feca57; font-size: 0.95rem; margin: 20px 0 10px 0;">The Projection Table</h3>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Year</strong><br>
+                Years into retirement, starting at Year 0 (retirement date).</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Portfolio</strong><br>
+                Projected portfolio balance at the start of that year, before that year's withdrawal.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">From Portfolio</strong><br>
+                Projected withdrawal amount that year. Increases with inflation annually.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">From Other</strong><br>
+                Projected other income that year. Also increases with inflation.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Total Income (Nominal)</strong><br>
+                Projected dollar amount received that year. Grows annually as withdrawals increase with inflation.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">Buying Power (Real)</strong><br>
+                Projected income expressed in today's dollars, allowing comparison to current expenses. Represents what the nominal income could theoretically purchase relative to today's prices.</p>
+                
+                <h3 style="color: #feca57; font-size: 0.95rem; margin: 20px 0 10px 0;">Key Assumptions &amp; Limitations</h3>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">1. Constant returns assumption</strong><br>
+                This calculator assumes portfolio growth at a steady annual rate. Actual markets experience significant volatility. Sequence of returns risk - experiencing poor returns early in retirement - can dramatically impact outcomes in ways this model does not capture.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">2. Inflation-adjusted withdrawals</strong><br>
+                Withdrawals increase annually at the inflation rate to theoretically maintain lifestyle. Year one withdrawal of $15,000 at 3% inflation becomes $15,450 in year two, $15,914 in year three, etc.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">3. Other income grows with inflation</strong><br>
+                Side income, rental income, etc. is assumed to increase with inflation. This may not reflect reality for fixed income sources like some pensions.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">4. Taxes not included</strong><br>
+                This calculator does not model taxes on withdrawals. Actual take-home income depends on account types, tax brackets, and tax law, which may change over time.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">5. No Social Security or future income events</strong><br>
+                This does not model Social Security benefits, inheritances, or other potential future income sources.</p>
+                
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">6. 50-year projection period</strong><br>
+                Projections extend 50 years. Longer retirements may require additional planning considerations.</p>
+                
+                <h3 style="color: #feca57; font-size: 0.95rem; margin: 20px 0 10px 0;">Using This Calculator</h3>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">Consider conservative inputs.</strong> Using lower expected returns (5% or below) and higher inflation (3-4%) provides more conservative projections for stress-testing purposes.
+                </p>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">The buying power column shows real purchasing power.</strong> Nominal figures grow with inflation; buying power shows the equivalent value in today's dollars.
+                </p>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">Other income affects portfolio longevity.</strong> Additional income sources reduce required portfolio withdrawals.
+                </p>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">The 4% rule was designed for 30-year periods.</strong> For early retirement spanning 40-50+ years, lower withdrawal rates (3% or below) are commonly discussed in the FIRE community.
+                </p>
+                
+                <h3 style="color: #ff6b6b; font-size: 0.95rem; margin: 30px 0 10px 0;">⚠️ Important Disclaimers</h3>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">This is not financial advice.</strong> This calculator is provided for informational and educational purposes only. It does not constitute financial, investment, tax, or legal advice. Consult qualified professionals before making financial decisions.
+                </p>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">Projections are hypothetical.</strong> All figures generated by this calculator are projections based on user-provided assumptions. They do not predict or guarantee future results. Actual investment returns, inflation rates, and personal circumstances will differ from any projection.
+                </p>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">Past performance does not indicate future results.</strong> Historical market data and commonly cited figures (like average returns or inflation rates) may not reflect future conditions.
+                </p>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">Provided "as is" without warranty.</strong> This tool is provided as-is without any warranty of any kind, express or implied. The creator assumes no responsibility or liability for any errors, omissions, or outcomes resulting from use of this calculator.
+                </p>
+                
+                <p style="margin-bottom: 8px;">
+                <strong style="color: #fff;">You are responsible for your own financial decisions.</strong> Use this tool as one of many inputs in your research. Verify all calculations independently and consult with qualified financial, tax, and legal professionals before making retirement or investment decisions.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Created by <a href="https://.substack.com" target="_blank">PWS</a>
+        </div>
+    </div>
+    
+    <script>
+        function formatCurrency(num) {
+            if (num >= 1000000) {
+                return '$' + (num / 1000000).toFixed(2) + 'M';
+            }
+            return '$' + Math.round(num).toLocaleString();
+        }
+        
+        function calculate() {
+            var assets = parseFloat(document.getElementById('assets').value) || 0;
+            var extraIncome = parseFloat(document.getElementById('extraIncome').value) || 0;
+            var swr = parseFloat(document.getElementById('swr').value) / 100;
+            var growth = parseFloat(document.getElementById('growth').value) / 100;
+            var inflation = parseFloat(document.getElementById('inflation').value) / 100;
+            
+            // Update displays
+            document.getElementById('swrDisplay').textContent = document.getElementById('swr').value + '%';
+            document.getElementById('growthDisplay').textContent = document.getElementById('growth').value + '%';
+            document.getElementById('inflationDisplay').textContent = document.getElementById('inflation').value + '%';
+            
+            // Year 1 income breakdown
+            var fromPortfolio = assets * swr;
+            var fromOther = extraIncome * 12;
+            var totalIncome = fromPortfolio + fromOther;
+            
+            document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+            document.getElementById('totalMonthly').textContent = formatCurrency(totalIncome / 12) + '/month';
+            
+            document.getElementById('fromPortfolio').textContent = formatCurrency(fromPortfolio);
+            document.getElementById('fromPortfolioMonthly').textContent = formatCurrency(fromPortfolio / 12) + '/mo';
+            
+            document.getElementById('fromOther').textContent = formatCurrency(fromOther);
+            document.getElementById('fromOtherMonthly').textContent = formatCurrency(fromOther / 12) + '/mo';
+            
+            // Build projection
+            var tableBody = document.getElementById('projectionTable');
+            tableBody.innerHTML = '';
+            
+            var portfolio = assets;
+            var withdrawal = fromPortfolio;
+            var otherIncomeYear = fromOther;
+            var runsOutYear = null;
+            
+            var yearsToShow = [0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+            
+            for (var year = 0; year <= 50; year++) {
+                // Total income this year (before any withdrawals for year 0)
+                var totalThisYear = withdrawal + otherIncomeYear;
+                
+                // Only show certain years in table
+                if (yearsToShow.indexOf(year) !== -1) {
+                    var row = document.createElement('tr');
+                    
+                    // Calculate real purchasing power (in today's dollars)
+                    // Year 0 = no discount, Year 1 = 1 year of inflation, etc.
+                    var realPurchasingPower = totalThisYear / Math.pow(1 + inflation, year);
+                    
+                    if (portfolio <= 0) {
+                        // Portfolio depleted - only other income remains
+                        var remainingReal = otherIncomeYear / Math.pow(1 + inflation, year);
+                        
+                        row.innerHTML = 
+                            '<td>Year ' + year + '</td>' +
+                            '<td class="depleted">Depleted</td>' +
+                            '<td class="depleted">$0</td>' +
+                            '<td>' + formatCurrency(otherIncomeYear) + '</td>' +
+                            '<td class="nominal">' + formatCurrency(otherIncomeYear) + '</td>' +
+                            '<td class="real">' + formatCurrency(remainingReal) + '</td>';
+                    } else {
+                        row.innerHTML = 
+                            '<td>Year ' + year + '</td>' +
+                            '<td>' + formatCurrency(portfolio) + '</td>' +
+                            '<td>' + formatCurrency(withdrawal) + '</td>' +
+                            '<td>' + formatCurrency(otherIncomeYear) + '</td>' +
+                            '<td class="nominal">' + formatCurrency(totalThisYear) + '</td>' +
+                            '<td class="real">' + formatCurrency(realPurchasingPower) + '</td>';
+                    }
+                    
+                    tableBody.appendChild(row);
+                }
+                
+                // After displaying, do end-of-year operations
+                // Withdraw from portfolio
+                portfolio = portfolio - withdrawal;
+                
+                if (portfolio <= 0 && runsOutYear === null) {
+                    runsOutYear = year + 1;
+                }
+                
+                // Grow portfolio
+                if (portfolio > 0) {
+                    portfolio = portfolio * (1 + growth);
+                }
+                
+                // Increase withdrawal and other income for inflation (to maintain lifestyle)
+                withdrawal = withdrawal * (1 + inflation);
+                otherIncomeYear = otherIncomeYear * (1 + inflation);
+            }
+            
+            // Update warning box
+            var warningBox = document.getElementById('warningBox');
+            var runsOutDisplay = document.getElementById('runsOutYear');
+            var runsOutNote = document.getElementById('runsOutNote');
+            
+            if (runsOutYear) {
+                runsOutDisplay.textContent = runsOutYear + ' yrs';
+                runsOutDisplay.classList.add('danger');
+                runsOutDisplay.classList.remove('safe');
+                runsOutNote.textContent = '⚠️ reduce withdrawal';
+                warningBox.classList.add('danger');
+                warningBox.classList.remove('warning');
+            } else {
+                runsOutDisplay.textContent = '50+ yrs';
+                runsOutDisplay.classList.remove('danger');
+                runsOutDisplay.classList.add('safe');
+                runsOutNote.textContent = '';
+                warningBox.classList.remove('danger');
+                warningBox.classList.add('warning');
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('assets').addEventListener('input', calculate);
+        document.getElementById('extraIncome').addEventListener('input', calculate);
+        document.getElementById('swr').addEventListener('input', calculate);
+        document.getElementById('growth').addEventListener('input', calculate);
+        document.getElementById('inflation').addEventListener('input', calculate);
+        
+        // Initial calculation
+        calculate();
+    </script>
+</body>
+</html>
