@@ -351,15 +351,23 @@
                 </div>
             </div>
             
+            <div style="margin-bottom: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #8892b0; font-size: 0.85rem;">
+                    <input type="checkbox" id="showAllYears" style="cursor: pointer;">
+                    Show all 50 years
+                </label>
+            </div>
+            
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
                             <th>Year</th>
                             <th>Portfolio</th>
-                            <th>From Portfolio</th>
-                            <th>From Other</th>
-                            <th>Total Income <span class="nominal">(Nominal)</span></th>
+                            <th>Growth</th>
+                            <th>Withdrawal</th>
+                            <th>End Balance</th>
+                            <th>Total Income <span class="nominal">(incl. other)</span></th>
                             <th>Buying Power <span class="real">(Real)</span></th>
                         </tr>
                     </thead>
@@ -450,6 +458,9 @@
                 <p style="margin-bottom: 8px;"><strong style="color: #fff;">6. 50-year projection period</strong><br>
                 Projections extend 50 years. Longer retirements may require additional planning considerations.</p>
                 
+                <p style="margin-bottom: 8px;"><strong style="color: #fff;">7. Order of operations</strong><br>
+                Each year: portfolio grows first, then withdrawal is taken at year-end. This matches standard FIRE calculation methodology.</p>
+                
                 <h3 style="color: #feca57; font-size: 0.95rem; margin: 20px 0 10px 0;">Using This Calculator</h3>
                 
                 <p style="margin-bottom: 8px;">
@@ -493,7 +504,7 @@
         </div>
         
         <div class="footer">
-            Created by <a href="https://.substack.com" target="_blank">PWS</a>
+            Created by <a href="https://paulstaples.substack.com" target="_blank">Paul Staples</a>
         </div>
     </div>
     
@@ -539,12 +550,18 @@
             var withdrawal = fromPortfolio;
             var otherIncomeYear = fromOther;
             var runsOutYear = null;
+            var showAllYears = document.getElementById('showAllYears').checked;
             
-            var yearsToShow = [0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+            var yearsToShow = showAllYears ? 
+                Array.from({length: 51}, function(_, i) { return i; }) : 
+                [0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
             
             for (var year = 0; year <= 50; year++) {
-                // Total income this year (before any withdrawals for year 0)
+                // Total income this year
                 var totalThisYear = withdrawal + otherIncomeYear;
+                
+                // Calculate growth for this year (to display)
+                var growthAmount = portfolio > 0 ? portfolio * growth : 0;
                 
                 // Only show certain years in table
                 if (yearsToShow.indexOf(year) !== -1) {
@@ -554,6 +571,9 @@
                     // Year 0 = no discount, Year 1 = 1 year of inflation, etc.
                     var realPurchasingPower = totalThisYear / Math.pow(1 + inflation, year);
                     
+                    // Calculate end balance (after growth and withdrawal)
+                    var endBalance = portfolio > 0 ? portfolio + growthAmount - withdrawal : 0;
+                    
                     if (portfolio <= 0) {
                         // Portfolio depleted - only other income remains
                         var remainingReal = otherIncomeYear / Math.pow(1 + inflation, year);
@@ -561,16 +581,18 @@
                         row.innerHTML = 
                             '<td>Year ' + year + '</td>' +
                             '<td class="depleted">Depleted</td>' +
-                            '<td class="depleted">$0</td>' +
-                            '<td>' + formatCurrency(otherIncomeYear) + '</td>' +
+                            '<td class="depleted">—</td>' +
+                            '<td class="depleted">—</td>' +
+                            '<td class="depleted">Depleted</td>' +
                             '<td class="nominal">' + formatCurrency(otherIncomeYear) + '</td>' +
                             '<td class="real">' + formatCurrency(remainingReal) + '</td>';
                     } else {
                         row.innerHTML = 
                             '<td>Year ' + year + '</td>' +
                             '<td>' + formatCurrency(portfolio) + '</td>' +
-                            '<td>' + formatCurrency(withdrawal) + '</td>' +
-                            '<td>' + formatCurrency(otherIncomeYear) + '</td>' +
+                            '<td style="color: #4ade80;">+' + formatCurrency(growthAmount) + '</td>' +
+                            '<td style="color: #f87171;">−' + formatCurrency(withdrawal) + '</td>' +
+                            '<td>' + formatCurrency(endBalance) + '</td>' +
                             '<td class="nominal">' + formatCurrency(totalThisYear) + '</td>' +
                             '<td class="real">' + formatCurrency(realPurchasingPower) + '</td>';
                     }
@@ -578,20 +600,23 @@
                     tableBody.appendChild(row);
                 }
                 
-                // After displaying, do end-of-year operations
-                // Withdraw from portfolio
-                portfolio = portfolio - withdrawal;
+                // End-of-year operations (standard FIRE methodology):
+                // 1. Portfolio grows during the year
+                // 2. Withdrawal taken at end of year
+                // 3. Withdrawal amount increases for next year's inflation
+                
+                if (portfolio > 0) {
+                    // Apply market growth first
+                    portfolio = portfolio * (1 + growth);
+                    // Then withdraw
+                    portfolio = portfolio - withdrawal;
+                }
                 
                 if (portfolio <= 0 && runsOutYear === null) {
                     runsOutYear = year + 1;
                 }
                 
-                // Grow portfolio
-                if (portfolio > 0) {
-                    portfolio = portfolio * (1 + growth);
-                }
-                
-                // Increase withdrawal and other income for inflation (to maintain lifestyle)
+                // Increase withdrawal and other income for inflation (for next year)
                 withdrawal = withdrawal * (1 + inflation);
                 otherIncomeYear = otherIncomeYear * (1 + inflation);
             }
@@ -624,6 +649,7 @@
         document.getElementById('swr').addEventListener('input', calculate);
         document.getElementById('growth').addEventListener('input', calculate);
         document.getElementById('inflation').addEventListener('input', calculate);
+        document.getElementById('showAllYears').addEventListener('change', calculate);
         
         // Initial calculation
         calculate();
